@@ -278,12 +278,14 @@ function prepareTree() {
 		}
 		for(languageIndex in treeUnpreparedData[familyName]){
 			family.nodes.push({
-				text: treeUnpreparedData[familyName][languageIndex]
+				text: treeUnpreparedData[familyName][languageIndex],
+				tags: ['<div style="margin-right:12px; height:12px; width:12px; border-radius: 50%; background: #'+intToARGB(hashCode(treeUnpreparedData[familyName][languageIndex]))+'"></div>']
 			});
 		}
 		treeData.push(family);
 	}	
 	$('#tree').treeview({
+		showTags: true,
 		data: treeData,
 		multiSelect: true,
 		onNodeSelected: function(event, data) {
