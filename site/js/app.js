@@ -7,6 +7,29 @@ var entityMap = {
     "/": '&#x2F;'
   };
 
+function hashCode(str) { // java String#hashCode
+    var hash = 0;
+    for (var i = 0; i < str.length; i++) {
+        hash = str.charCodeAt(i) + ((hash << 5) - hash);
+    }
+    return hash;
+}
+
+function intToARGB(i){
+    var string = ((i>>24)&0xFF).toString(16) +
+    ((i>>16)&0xFF).toString(16) +
+    ((i>>8)&0xFF).toString(16) +
+    (i&0xFF).toString(16);
+    string = string.substr(0,6);
+    while(string.length<6){
+        string += "f";
+    }
+    if(string.length>6){
+        string = string.substr(0,6);
+    }
+    return string;
+}
+
 function escapeHtml(string) {
   return String(string).replace(/[&<>"'\/]/g, function (s) {
     return entityMap[s];
@@ -101,7 +124,32 @@ var addCsvMarkers = function() {
 
     map.removeLayer(markers);
     points.clearLayers();
-	markers = new L.MarkerClusterGroup(clusterOptions);
+
+    markers = new L.MarkerClusterGroup({
+		iconCreateFunction: function(cluster) {
+			var childMarkers = cluster.getAllChildMarkers();
+			var languageSet = {};
+			var property = points.getPropertyName('language');
+			for(var i in childMarkers){
+				var language = childMarkers[i].feature.properties[property];
+                languageSet[language] = true;
+			}
+            var languageArray = Object.keys(languageSet);
+            if(languageArray.length==1){
+                var colorsString = '#'+intToARGB(hashCode(languageArray[0]))
+            }
+            else {
+                var colors = [];
+                for(var i in languageArray){
+                    colors.push('#'+intToARGB(hashCode(languageArray[i])));
+                }
+                var colorsString = 'linear-gradient(to right, '+colors.join(',')+')';
+            }
+            
+			return new L.DivIcon({ className: 'custom-marker', html: '<div style="height:24px; width:24px; border-radius: 50%; background: '+colorsString+'">' + cluster.getChildCount() + '</div>' });
+		},
+		singleMarkerMode: true
+	});
     points.addData(dataCsv);
     markers.addLayer(points);
 
