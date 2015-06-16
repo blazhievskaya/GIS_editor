@@ -1,20 +1,20 @@
-﻿from flask import Flask, request, send_from_directory,redirect, url_for, render_template
+#decode: utf-8
+from flask import Flask, request, send_from_directory,redirect, url_for, render_template
 import codecs, os, pprint
 from xml.dom.minidom import parse, parseString
 from werkzeug import secure_filename
 
-UPLOAD_FOLDER = '/Users/blazhievskaya_aleksandra/Documents/coursework/site/data'
+
+path1 = os.path.dirname(os.path.abspath(__file__))
+UPLOAD_FOLDER = os.path.join(path1,'site', 'data')
 ALLOWED_EXTENSIONS = set(['txt', 'csv','kml'])
 
 app = Flask(__name__, static_url_path='')
-app.config['/Users/blazhievskaya_aleksandra/Documents/coursework/site/data'] = UPLOAD_FOLDER
+app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 
 # set the project root directory as the static folder, you can set others.
 app.debug = True
 
-@app.route('/')
-def export():
-    return redirect('/export.html')
 
 def allowed_file(filename):
     return '.' in filename and \
@@ -26,13 +26,13 @@ def upload_file():
         file = request.files['file']
         if file and allowed_file(file.filename):
             filename = secure_filename(file.filename)
-            file.save(os.path.join(app.config['/Users/blazhievskaya_aleksandra/Documents/coursework/site/data'], filename))
+            file.save(os.path.join(app.config['UPLOAD_FOLDER'], filename))
             return redirect(url_for('uploaded_file',
                                     filename=filename))
     
-@app.route('/Users/blazhievskaya_aleksandra/Documents/coursework/<filename>')
+@app.route(path1 +'<filename>')
 def uploaded_file(filename):
-    return send_from_directory(app.config['/Users/blazhievskaya_aleksandra/Documents/coursework/site/data'],
+    return send_from_directory(app.config['UPLOAD_FOLDER'],
                                filename)
     
 @app.route('/csv/<path:path>')
@@ -42,10 +42,6 @@ def send_js(path):
 @app.route('/site/<path:path>')
 def send_public(path):
     return send_from_directory('site', path)
-
-#@app.route('/uploadCsv')
-#def upload_csv():
-#    return true
 
    
 @app.route('/convert')
