@@ -15,6 +15,15 @@ function hashCode(str) { // java String#hashCode
     return hash;
 }
 
+function getParameterByName(name) {
+    name = name.replace(/[\[]/, "\\[").replace(/[\]]/, "\\]");
+    var regex = new RegExp("[\\?&]" + name + "=([^&#]*)"),
+        results = regex.exec(location.search);
+    return results === null ? "" : decodeURIComponent(results[1].replace(/\+/g, " "));
+   }
+var colorField = getParameterByName('colorField');
+if(!colorField) colorField = 'language';
+
 function intToARGB(i){
     var string = ((i>>24)&0xFF).toString(16) +
     ((i>>16)&0xFF).toString(16) +
@@ -28,6 +37,27 @@ function intToARGB(i){
         string = string.substr(0,6);
     }
     return string;
+}
+
+function stringToARGB(str){
+	var predefinedMap = {
+		'1' : '000000', //black
+		'2' : 'ffffff', //white
+		'3' : 'ff0000', //red
+		'4' : '00ff00', //green
+		'5' : '0000ff', //blue
+		'6' : 'ED871A', //orange
+		'7' : 'ED3EAD', //pink
+		'8' : '777777', //grey
+		'9' : '6B3006', //brown
+		'no_info' : '75EFFF', //bright-blue
+		'no_dat'  : '236B0B', //light-green
+	};
+	if(predefinedMap[str]){
+		console.log(predefinedMap[str]);
+		return predefinedMap[str];
+	}
+	return intToARGB(hashCode(str));
 }
 
 function escapeHtml(string) {
@@ -129,19 +159,19 @@ var addCsvMarkers = function() {
 		iconCreateFunction: function(cluster) {
 			var childMarkers = cluster.getAllChildMarkers();
 			var languageSet = {};
-			var property = points.getPropertyName('language');
+			var property = points.getPropertyName(colorField);
 			for(var i in childMarkers){
 				var language = childMarkers[i].feature.properties[property];
                 languageSet[language] = true;
 			}
             var languageArray = Object.keys(languageSet);
             if(languageArray.length==1){
-                var colorsString = '#'+intToARGB(hashCode(languageArray[0]))
+                var colorsString = '#'+stringToARGB(languageArray[0])
             }
             else {
                 var colors = [];
                 for(var i in languageArray){
-                    colors.push('#'+intToARGB(hashCode(languageArray[i])));
+                    colors.push('#'+stringToARGB(languageArray[i]));
                 }
                 var colorsString = 'linear-gradient(to right, '+colors.join(',')+')';
             }
@@ -213,11 +243,12 @@ function addSettings() {
         var property = points._propertiesNames[propertyIndex];
         if (property != 'lat' && property != 'lng'){
             var tr = $('<tr></tr>');
-            tr.append('<td>'+property+'</td>');
+            tr.append('<td>'+points.getPropertyTitle(property)+'</td>');
             var filterInput = $('<input id="prop-'+propertyIndex+'-filter" type="text" autocomplete="off"/>');
             filterInput.typeahead({source: ArrayToSet(typeAheadSource[propertyIndex])});
             tr.append($('<td></td>').append(filterInput));
             tr.append('<td><input checked id="prop-'+propertyIndex+'-visible" type="checkbox"/></td>');
+         
 
             $('#settings tbody').append(tr);
         }
@@ -279,7 +310,7 @@ function prepareTree() {
 		for(languageIndex in treeUnpreparedData[familyName]){
 			family.nodes.push({
 				text: treeUnpreparedData[familyName][languageIndex],
-				tags: ['<div style="margin-right:12px; height:12px; width:12px; border-radius: 50%; background: #'+intToARGB(hashCode(treeUnpreparedData[familyName][languageIndex]))+'"></div>']
+				tags: ['<div style="margin-right:12px; height:12px; width:12px; border-radius: 50%; background: #'+stringToARGB(treeUnpreparedData[familyName][languageIndex])+'"></div>']
 			});
 		}
 		treeData.push(family);
@@ -412,7 +443,7 @@ $(document).ready( function() {
     });
 
     $("#clear").click(function(evt){
-        evt.preventDefault();
+        evt.defaultPrevented();
         $("#filter-string").val("").focus();
         addCsvMarkers();
     });
